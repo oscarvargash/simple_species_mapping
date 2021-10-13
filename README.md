@@ -41,5 +41,153 @@ You can download Rstudio here (https://www.rstudio.com/)
  
 Figure 1 is a typical workspace in Rstudio, with four panels. You may have to open a new script (source) when you open the program for the first time: click on the new script icon to the top-left corner (see Fig 1, indicated with a yellow arrow). The most important panels right now are on the left, the source and the console. The source code in the top-left corner is where you will type your code and save your script. The console is where the code runs. You can write code directly to the console to find whether it works or not, or the answer to a calculation. You can also send your code from the source to the console to run. Importantly, you will be saving your source code, if you are typing in the console, you will be unable to save your progress or reuse your code. Therefore, I recommend you ALWAYS type and work on the source panel and send your code to run and see the output on the console. The panels on the right will display your data tables, plots, help and other features, but we will get to those later.
 
+# Working with R
 
+When you open R you will get a interactive window like this, also called the R console. 
 
+You can write in this window and interact wih R directly. Let's created a variable "x" and asing the nuber "2" to it. Theype the floowing text and press enter.
+
+```
+x <- 2
+```
+Now when you type `x` in the console, it will return 2.
+```
+x
+```
+
+Because we want to create code that we can re-run, it is better to create a text document that we can execute in R. In order to do so, click on the white page icon at the top that when hover over says "Create, a new empty document on the editor". In the new windown type:
+```
+x <- 2
+y <- x + x
+y
+```
+
+MAC: to run the code select it and press <kbd>command</kbd> + <kbd>return</kbd>
+PC: to run the code selct it and press <kbd>control</kbd> + <kbd>r</kbd>
+R is now making and addition with x, the returning value is then assigned to y. 
+
+You can save the text file with the code by going to "file" in the menu and then "save". Save your script in any location you want
+
+Congratulations, you have created your first script!
+
+## Packages
+
+Packages are group of functions that can be installed in your R environment. Dplyr is a great package for managing tables.
+
+To install the package we neet to type:
+
+```
+install.packages("dplyr")
+```
+
+Now that the package is installed we need to load the package in R by typing
+
+```
+library(dplyr)
+```
+
+## Importing the dataset and creating a basemap
+
+Let's install and load the packages nedeed for our exercise
+```
+install.packages(c("ggplot2","ggmap"))
+
+library(ggplot2)
+library(ggmap)
+library(dplyr)
+```
+
+Today we are going to create a working directory. This will make importing and saving easier.
+```
+setwd("/Users/ov20/Desktop/Abronia")
+getwd()
+```
+
+Now download the dataset and place it in such directory
+
+https://www.dropbox.com/s/s9do9kz4zrur8pw/abronia_2.csv?dl=0
+
+Once the dataset is in the "Abronia" directory you can import the data:
+
+```
+data <- read.csv("Abronia_2.csv")
+head(data)
+tail(data)
+```
+
+Like in our previous example we need to filter out data without a georreference
+```
+geodata <- data %>% filter(!is.na(decimalLatitude))
+tail(geodata)
+```
+
+Now we can plot the records and do some basic filtering
+```
+plot(geodata$decimalLongitude, geodata$decimalLatitude)
+geodata2 <- geodata %>% filter(decimalLatitude > 10)
+plot(geodata2$decimalLongitude, geodata2$decimalLatitude)
+```
+
+Let's check how many species are in our dataset and how many records per species we have.
+```
+Ab_sp <- geodata %>% group_by(species) %>% tally()
+```
+
+Now we need to create a basemap. Notice that this map is different from the one we created with Darlingtonia
+```
+basemap <-  get_map(location = c(-140, 10, -70, 60), zoom = 4)
+ggmap(basemap)
+```
+
+Now, let's map all the dataset points in the base map
+```
+ggmap(basemap) + geom_point(data = geodata2, aes(x=decimalLongitude, y=decimalLatitude, color=species))
+```
+
+## Creating a map for a single species
+1. Create a subdataset for a single species
+```
+abla <- geodata2 %>% filter(species == "Abronia latifolia")
+head(abla)
+tail(abla)
+```
+
+2. Create a name for the resulting pdf file with the map
+```
+pdfName <- "Abronia latifolia .pdf" 
+```
+
+3. Draw the map
+```
+ggmap(basemap) + geom_point(data = abla, aes(x=decimalLongitude, y=decimalLatitude)) + ggtitle("Abronia latifolia")
+
+```
+
+4. Save the map
+```
+ggsave(filename = pdfName, plot=last_plot()) 
+```
+
+Cool!
+
+## Using a loop to draw a map for each species
+
+In R a loop uses the floowing logic
+
+for (item in item_list){
+	perform_action_1
+	perform_action_2
+	etc
+}
+
+In our case our loop would look like this, notice that it contains every step used previously to create a single map
+```
+for (x in (Ab_sp$species)) {
+	sp_data <- geodata2 %>% filter(species == x) #1
+	outname <- paste(x, ".pdf") #2
+	ggmap(basemap) + geom_point(data = sp_data, aes(x=decimalLongitude, y=decimalLatitude), color ="red4") + ggtitle(x) #3
+	ggsave(filename = outname, plot=last_plot()) #4
+}
+```
+
+After runing the code you should be be able to see 23 pdf files in your working folder!
