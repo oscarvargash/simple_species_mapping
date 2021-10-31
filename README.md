@@ -55,7 +55,7 @@ Now when you type `x` in the console, it will return 2.
 x
 ```
 
-Because we want to create code that we can re-run, it is better to create a text document that we can execute in R. In order to do so, click on the white page icon at the top that when hover over says "Create, a new empty document on the editor". In the new windown type:
+Because we want to create code that we can re-run, it is better to create a text document that we can execute in R. In order to do so, click on the white page icon at the top that when hover over says "Create, a new empty document on the editor" (in some cases new a new teext file has already been created automatically after opening Rstudio). In the new windown type:
 ```
 x <- 2
 y <- x + x
@@ -154,7 +154,7 @@ tail(abla)
 
 2. Create a name for the resulting pdf file with the map
 ```
-pdfName <- "Abronia latifolia .pdf" 
+pdfName <- "Abronia latifolia.pdf" 
 ```
 
 3. Draw the map
@@ -167,6 +167,18 @@ ggmap(basemap) + geom_point(data = abla, aes(x=decimalLongitude, y=decimalLatitu
 ```
 ggsave(filename = pdfName, plot=last_plot()) 
 ```
+
+
+5. Create a name for the csv file
+```
+csv_name <- "Abronia_latifolia.csv"
+```
+
+6. Save the dataset just for one species, Abronia latifolia
+```
+write.csv(abla, csv_name)
+```
+
 
 Cool!
 
@@ -182,12 +194,30 @@ for (item in item_list){
 
 In our case our loop would look like this, notice that it contains every step used previously to create a single map
 ```
-for (x in (Ab_sp$species)) {
-	sp_data <- geodata2 %>% filter(species == x) #1
-	outname <- paste(x, ".pdf") #2
-	ggmap(basemap) + geom_point(data = sp_data, aes(x=decimalLongitude, y=decimalLatitude), color ="red4") + ggtitle(x) #3
-	ggsave(filename = outname, plot=last_plot()) #4
+for (x in (Ab_sp$species)){
+	print(x)
+	# 1 creating a dataset for only one species
+	sp_data <- geodata2 %>% filter(species == x)
+	print("subset of ocurrences created")
+	
+	# 2 creating file name for map
+	file_title <- paste(x, ".pdf", sep = "")
+
+	# 3 creating the map
+	ggmap(basemap) + geom_point(data = sp_data, aes(x=decimalLongitude, y=decimalLatitude), color ="blue") + ggtitle(x) # creating the map
+	print("map created")
+
+	# 4 saving plot in pdf						
+	ggsave(filename = file_title, plot=last_plot()) 
+	print(file_title)
+
+	# 5 creating file name for dataset for every species
+	dataset_title <- paste(x, ".csv", sep = "")
+
+	# 6 saving dataset for species
+	write.csv(sp_data, dataset_title)	
 }
+
 ```
 
 After runing the code you should be be able to see 23 pdf files in your working folder!
